@@ -3,14 +3,6 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
-  "resolutions": {
-    "@rollup/rollup-linux-x64-gnu": "latest"
-  },
-  "pnpm": {
-    "overrides": {
-      "@rollup/rollup-linux-x64-gnu": "latest"
-    }
-  },
   "scripts": {
     "build": "remix vite:build && cp -r public build/public",
     "dev": "remix vite:dev",
@@ -56,8 +48,7 @@
     "typescript": "^5.1.6",
     "vite": "^6.0.0",
     "vite-tsconfig-paths": "^4.2.1",
-    "rollup": "^3.29.4",
-    "@rollup/rollup-linux-x64-gnu": "3.29.4"
+    "rollup": "^3.29.4"
   },
   "engines": {
     "node": ">=20.0.0"
