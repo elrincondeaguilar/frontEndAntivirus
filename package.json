@@ -55,7 +55,9 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.1.6",
     "vite": "^6.0.0",
-    "vite-tsconfig-paths": "^4.2.1"
+    "vite-tsconfig-paths": "^4.2.1",
+    "rollup": "^3.29.4",
+    "@rollup/rollup-linux-x64-gnu": "3.29.4"
   },
   "engines": {
     "node": ">=20.0.0"
