@@ -33,45 +33,30 @@ jobs:
         run: |
           npm run build
           
-      - name: Prepare deployment files
+      - name: Prepare clean deployment
         run: |
-          # Limpiar y crear directorio de deploy
-          rm -rf deploy
-          mkdir -p deploy
+          # Crear directorio completamente limpio
+          rm -rf static-deploy
+          mkdir static-deploy
           
-          # Copiar solo los archivos necesarios
-          cp -r build/client/* deploy/
-          cp staticwebapp.config.json deploy/
+          # Copiar SOLO archivos estáticos, SIN package.json ni node_modules
+          cp -r build/client/* static-deploy/
+          cp staticwebapp.config.json static-deploy/
+          touch static-deploy/.nojekyll
           
-          # Crear archivos que eviten que Oryx detecte esto como proyecto Node.js
-          touch deploy/.nojekyll
-          rm -f deploy/package.json || true
+          # Crear un index.php como fallback para asegurar que no detecte Node.js
+          echo '<?php header("Location: index.html"); ?>' > static-deploy/index.php
           
-          # Crear un archivo web.config para IIS si es necesario
-          echo '<?xml version="1.0" encoding="utf-8"?>
-          <configuration>
-            <system.webServer>
-              <rewrite>
-                <rules>
-                  <rule name="React Routes" stopProcessing="true">
-                    <match url=".*" />
-                    <conditions logicalGrouping="MatchAll">
-                      <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
-                      <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
-                    </conditions>
-                    <action type="Rewrite" url="/index.html" />
-                  </rule>
-                </rules>
-              </rewrite>
-            </system.webServer>
-          </configuration>' > deploy/web.config
+          # NO crear package.json para evitar detección de Node.js
           
-          # Verificar contenido
-          echo "=== Deploy directory contents ==="
-          ls -la deploy/
-          echo "=== Checking key files ==="
-          test -f deploy/index.html && echo "✅ index.html exists" || echo "❌ index.html missing"
-          test -f deploy/staticwebapp.config.json && echo "✅ staticwebapp.config.json exists" || echo "❌ staticwebapp.config.json missing"
+          # Verificar que NO hay package.json
+          echo "=== Verificando que NO hay package.json en deploy ==="
+          ls -la static-deploy/ | grep -E "(package\.json|node_modules)" || echo "✅ No Node.js files detected"
+          
+          echo "=== Static deploy directory contents ==="
+          ls -la static-deploy/
+          echo "=== Key files check ==="
+          test -f static-deploy/index.html && echo "✅ index.html exists" || echo "❌ index.html missing"
 
       - name: Deploy to Azure Static Web Apps
         id: builddeploy
@@ -80,18 +65,11 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_OCEAN_07D3E3A1E }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          ###### Repository/Build Configurations ######
-          app_location: "/deploy"
+          app_location: "static-deploy"
           api_location: ""
           output_location: ""
-          ###### Advanced settings ######
           skip_app_build: true
           skip_api_build: true
-        env:
-          # Deshabilitar detección automática de Oryx
-          DISABLE_STATIC_SITE_BUILD: true
-          PRE_BUILD_COMMAND: "echo 'Skipping pre-build'"
-          CUSTOM_BUILD_COMMAND: "echo 'Using pre-built files'"
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
