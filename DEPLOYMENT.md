@@ -4,17 +4,28 @@ Este proyecto ha sido configurado para desplegarse en **Azure Static Web Apps** 
 
 ## 🚀 Estado Actual
 
-- 🔄 **Aplicación**: Desplegándose en https://lively-moss-07487241e.1.azurestaticapps.net/
+- 🔄 **Aplicación**: Configurada para https://lively-moss-07487241e.1.azurestaticapps.net/
+- ❌ **Token Azure**: INVÁLIDO - Requiere actualización urgente
 - ✅ **Modo SPA**: Configurado completamente
-- ✅ **Workflow**: GitHub Actions funcionando - Oryx problem SOLVED!
-- ✅ **Build**: Archivos estáticos generados correctamente en `static-deploy/`
-- 🔧 **Token**: Verificando configuración final
+- ✅ **Build Estático**: Generación exitosa
+- 📋 **Acción Requerida**: Actualizar token de Azure
 
-## 🎉 PROGRESO RECIENTE
+## 🚨 PROBLEMA CRÍTICO: Token Inválido
 
-- ✅ **Problema Oryx RESUELTO**: Azure ya no intenta hacer build automático
-- ✅ **Directorio detectado**: `static-deploy` encontrado correctamente
-- 🔧 **Solo falta**: Configurar token correcto de Azure
+**Error**: `No matching Static Web App was found or the api key was invalid`
+
+### 🔧 SOLUCIÓN INMEDIATA - Actualizar Token:
+
+1. **Azure Portal** → https://portal.azure.com
+2. Buscar tu **Static Web App** (puede llamarse diferente a `lively-moss-07487241e`)
+3. **Overview** → **Manage deployment token**
+4. **Copiar el token completo**
+5. **GitHub** → Repo → **Settings** → **Secrets and variables** → **Actions**
+6. **Actualizar secret**: `AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_MOSS_07487241E`
+
+### 🎯 SOLUCIÓN ALTERNATIVA - GitHub Pages:
+
+Si el token de Azure sigue fallando, usar GitHub Pages:
 
 ## 🔧 Configuración Final de Deployment
 

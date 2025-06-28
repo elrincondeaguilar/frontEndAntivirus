@@ -2,11 +2,30 @@
 
 ## ⚠️ Estado Actual: TROUBLESHOOTING ACTIVO
 
-### ✅ Problema 1: Token Configuration - RESUELTO
+## ⚠️ Estado Actual: TOKEN INVÁLIDO
 
-El token está funcionando correctamente: `AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_OCEAN_07D3E3A1E`
+### 🚨 Error Actual:
 
-### 🔄 Problema 2: Oryx Build Detection - EN PROGRESO
+```
+The content server has rejected the request with: BadRequest
+Reason: No matching Static Web App was found or the api key was invalid.
+```
+
+### ✅ Problema 1: Token Configuration - REQUIERE ACCIÓN
+
+**ERROR**: El token `AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_OCEAN_07D3E3A1E` es inválido.
+**SOLUCIÓN**: Necesitas obtener el token correcto desde Azure Portal.
+
+### 🔧 Pasos para Obtener el Token Correcto:
+
+1. **Ve a Azure Portal** → https://portal.azure.com
+2. **Busca tu Static Web App**: `lively-moss-07487241e` o el nombre correcto
+3. **Ve a Overview** → **Manage deployment token**
+4. **Copia el token completo**
+5. **Ve a GitHub** → Tu repo → Settings → Secrets and variables → Actions
+6. **Actualiza** `AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_MOSS_07487241E` con el nuevo token
+
+### 🔄 Problema 2: Oryx Build Detection - SOLUCIONADO
 
 Azure sigue detectando el proyecto como Node.js y forzando el uso de Oryx build, ignorando `skip_app_build: true`.
 
