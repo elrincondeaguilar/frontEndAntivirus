@@ -1,29 +1,67 @@
-steps:
-  - uses: actions/checkout@v3
-  
-  - name: Setup Node.js
-    uses: actions/setup-node@v3
-    with:
-      node-version: '20'
-      cache: 'npm'
+name: Azure Static Web Apps CI/CD
 
-  - name: Install dependencies
-    run: |
-      # Limpiar instalaciones previas
-      rm -rf node_modules
-      rm -f package-lock.json
-      
-      # Instalar dependencias principales
-      npm install
-      
-      # Instalar Rollup explícitamente (sin el paquete Linux específico)
-      npm install rollup@3.29.4 --save-dev
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
 
-  - name: Build And Deploy
-    uses: Azure/static-web-apps-deploy@v1
-    with:
-      azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_MOSS_07487241E }}
-      action: "upload"
-      app_location: "/"
-      api_location: ""
-      output_location: "public"
+jobs:
+  build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    name: Build and Deploy Job
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          # Limpiar instalaciones previas
+          rm -rf node_modules
+          rm -f package-lock.json
+          
+          # Instalar dependencias principales
+          npm install
+          
+          # Instalar Rollup explícitamente (sin el paquete Linux específico)
+          npm install rollup@3.29.4 --save-dev
+
+      - name: Build project
+        run: |
+          npm run build
+          # Copiar archivos estáticos al directorio de build
+          cp -r public/* build/client/ || true
+
+      - name: Build And Deploy
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_MOSS_07487241E }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "/"
+          api_location: ""
+          output_location: "build/client"
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    steps:
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_MOSS_07487241E }}
+          action: "close"

@@ -13,6 +13,15 @@ export default defineConfig({
     "process.env": {}, // TODO:Evita el error en el navegador
   },
   publicDir: "public",
+  build: {
+    outDir: "build/client",
+    assetsDir: "assets",
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
+  },
   plugins: [
     remix({
       future: {
@@ -22,6 +31,8 @@ export default defineConfig({
         v3_singleFetch: true,
         v3_lazyRouteDiscovery: true,
       },
+      // Configuración para Azure Static Web Apps
+      ssr: false, // Deshabilitar SSR para despliegue estático
     }),
     tsconfigPaths(),
   ],
