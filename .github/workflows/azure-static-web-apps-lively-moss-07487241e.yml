@@ -3,11 +3,11 @@ name: Azure Static Web Apps CI/CD
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
-      - main
+      - master
 
 jobs:
   build_and_deploy_job:
@@ -15,11 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
+
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
@@ -27,35 +28,15 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-          npm install rollup@3.29.4 --save-dev
 
       - name: Build project
         run: |
           npm run build
-          # Copiar configuración de SWA al directorio de build
           cp staticwebapp.config.json build/client/
-          # Crear archivo .nojekyll para indicar contenido estático
           touch build/client/.nojekyll
+          echo '{"name":"static-app","version":"1.0.0","scripts":{"start":"echo static"}}' > build/client/package.json
 
-      - name: Verify build output
-        run: |
-          echo "Listing build/client contents:"
-          ls -la build/client/
-          echo "Checking if index.html exists:"
-          test -f build/client/index.html && echo "✅ index.html found" || echo "❌ index.html missing"
-          echo "Contents of index.html (first 5 lines):"
-          head -5 build/client/index.html || echo "❌ Cannot read index.html"
-
-      - name: Debug secrets
-        run: |
-          echo "Checking if token is available..."
-          if [ -z "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_OCEAN_07D3E3A1E }}" ]; then
-            echo "❌ AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_OCEAN_07D3E3A1E is empty"
-          else
-            echo "✅ AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_OCEAN_07D3E3A1E is available"
-          fi
-
-      - name: Build And Deploy
+      - name: Deploy to Azure Static Web Apps
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
@@ -63,8 +44,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "build/client"
-          api_location: ""
-          output_location: ""
+          output_location: "."
           skip_app_build: true
 
   close_pull_request_job:
