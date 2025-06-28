@@ -3,6 +3,7 @@
 Este proyecto ha sido configurado para desplegarse en **Azure Static Web Apps** en modo SPA (Single Page Application).
 
 ## 🚀 Estado Actual
+
 - ✅ **Aplicación**: Desplegada en https://lively-moss-07487241e.1.azurestaticapps.net/
 - ✅ **Modo SPA**: Configurado completamente
 - ✅ **Workflow**: GitHub Actions funcionando correctamente
@@ -11,15 +12,18 @@ Este proyecto ha sido configurado para desplegarse en **Azure Static Web Apps** 
 ## 🔧 Configuración Final de Deployment
 
 ### 1. Workflow de GitHub Actions
+
 **Archivo**: `.github/workflows/azure-static-web-apps-lively-moss-07487241e.yml`
 
 **Configuración clave**:
+
 - `app_location: "build/client"` - Usar build pre-construido
 - `output_location: ""` - No necesario con skip_app_build
 - `skip_app_build: true` - Azure no intenta hacer build automático
 - `api_location: ""` - Sin funciones de API
 
 ### 2. Archivos de Build
+
 - ✅ `index.html` - Punto de entrada SPA
 - ✅ `staticwebapp.config.json` - Configuración de rutas copiada
 - ✅ `.nojekyll` - Indicador de contenido estático
