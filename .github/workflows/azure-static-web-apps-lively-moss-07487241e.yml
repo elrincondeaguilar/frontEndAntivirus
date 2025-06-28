@@ -16,13 +16,8 @@ steps:
       # Instalar dependencias principales
       npm install
       
-      # Instalar Rollup explícitamente
+      # Instalar Rollup explícitamente (sin el paquete Linux específico)
       npm install rollup@3.29.4 --save-dev
-      
-      # Solo instalar el binario Linux en CI (no en Windows)
-      if [ "$RUNNER_OS" == "Linux" ]; then
-        npm install @rollup/rollup-linux-x64-gnu@3.29.4 --save-dev --ignore-scripts
-      fi
 
   - name: Build And Deploy
     uses: Azure/static-web-apps-deploy@v1
