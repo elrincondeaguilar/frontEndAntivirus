@@ -32,17 +32,46 @@ jobs:
       - name: Build project
         run: |
           npm run build
-          # Crear directorio de deploy completamente independiente
+          
+      - name: Prepare deployment files
+        run: |
+          # Limpiar y crear directorio de deploy
+          rm -rf deploy
           mkdir -p deploy
+          
+          # Copiar solo los archivos necesarios
           cp -r build/client/* deploy/
           cp staticwebapp.config.json deploy/
+          
+          # Crear archivos que eviten que Oryx detecte esto como proyecto Node.js
           touch deploy/.nojekyll
-          # Crear un package.json simple para que Azure no trate de hacer build
-          echo '{"scripts":{"start":"serve -s . -p 8080"}}' > deploy/package.json
-          # Crear archivo que diga a Oryx que no haga build
-          echo -e '[build]\nskipBuild = true' > deploy/.oryxignore
+          rm -f deploy/package.json || true
+          
+          # Crear un archivo web.config para IIS si es necesario
+          echo '<?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <system.webServer>
+              <rewrite>
+                <rules>
+                  <rule name="React Routes" stopProcessing="true">
+                    <match url=".*" />
+                    <conditions logicalGrouping="MatchAll">
+                      <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+                      <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+                    </conditions>
+                    <action type="Rewrite" url="/index.html" />
+                  </rule>
+                </rules>
+              </rewrite>
+            </system.webServer>
+          </configuration>' > deploy/web.config
+          
           # Verificar contenido
+          echo "=== Deploy directory contents ==="
           ls -la deploy/
+          echo "=== Checking key files ==="
+          test -f deploy/index.html && echo "✅ index.html exists" || echo "❌ index.html missing"
+          test -f deploy/staticwebapp.config.json && echo "✅ staticwebapp.config.json exists" || echo "❌ staticwebapp.config.json missing"
 
       - name: Deploy to Azure Static Web Apps
         id: builddeploy
@@ -51,9 +80,18 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_OCEAN_07D3E3A1E }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "deploy"
-          output_location: "."
+          ###### Repository/Build Configurations ######
+          app_location: "/deploy"
+          api_location: ""
+          output_location: ""
+          ###### Advanced settings ######
           skip_app_build: true
+          skip_api_build: true
+        env:
+          # Deshabilitar detección automática de Oryx
+          DISABLE_STATIC_SITE_BUILD: true
+          PRE_BUILD_COMMAND: "echo 'Skipping pre-build'"
+          CUSTOM_BUILD_COMMAND: "echo 'Using pre-built files'"
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
