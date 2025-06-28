@@ -23,21 +23,31 @@ jobs:
           submodules: true
           lfs: false
       
-      # Paso nuevo: Configurar Node.js
+      # Configurar Node.js y npm
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20' # Usa Node.js 20 (compatible con tu engines)
+          node-version: '20'
           cache: 'npm'
       
-      # Paso nuevo: Instalar dependencias de Rollup
-      - name: Fix Rollup dependencies
+      # Instalar todas las dependencias incluyendo Rollup
+      - name: Install dependencies
         run: |
-          npm install -g npm@latest
-          npm install @rollup/rollup-linux-x64-gnu --save-dev
-          npm install rollup@^3.29.4 --save-dev
+          # Limpiar instalaciones previas
+          rm -rf node_modules
+          rm -f package-lock.json
+          
+          # Instalar dependencias principales
+          npm install
+          
+          # Instalar dependencias específicas de Rollup
+          npm install @rollup/rollup-linux-x64-gnu@3.29.4 --save-dev --legacy-peer-deps
+          npm install rollup@3.29.4 --save-dev --legacy-peer-deps
+          
+          # Verificar instalación
+          ls node_modules/@rollup || echo "Rollup no se instaló correctamente"
       
-      - name: Install OIDC Client from Core Package
+      - name: Install OIDC Client
         run: npm install @actions/core@1.6.0 @actions/http-client
       
       - name: Get Id Token
