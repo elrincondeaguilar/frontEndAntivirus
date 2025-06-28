@@ -3,8 +3,17 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "resolutions": {
+    "@rollup/rollup-linux-x64-gnu": "latest"
+  },
+  "pnpm": {
+    "overrides": {
+      "@rollup/rollup-linux-x64-gnu": "latest"
+    }
+  },
   "scripts": {
     "build": "remix vite:build && cp -r public build/public",
+    "prebuild": "pnpm add @rollup/rollup-linux-x64-gnu -D",
     "dev": "remix vite:dev",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "remix-serve ./build/server/index.js",
@@ -47,7 +56,9 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.1.6",
     "vite": "^6.0.0",
-    "vite-tsconfig-paths": "^4.2.1"
+    "vite-tsconfig-paths": "^4.2.1",
+    "@rollup/rollup-linux-x64-gnu": "latest",
+    "rollup": "^3.29.4"
   },
   "engines": {
     "node": ">=20.0.0"
