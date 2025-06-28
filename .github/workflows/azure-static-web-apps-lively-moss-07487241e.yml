@@ -34,6 +34,8 @@ jobs:
           npm run build
           # Copiar configuración de SWA al directorio de build
           cp staticwebapp.config.json build/client/
+          # Crear archivo .nojekyll para indicar contenido estático
+          touch build/client/.nojekyll
 
       - name: Verify build output
         run: |
@@ -60,11 +62,10 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_OCEAN_07D3E3A1E }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "build/client" # Directamente a la carpeta construida
+          app_location: "build/client"
           api_location: ""
-          output_location: "" # Vacío porque app_location ya apunta a los archivos finales
-          skip_app_build: true # No hacer build, usar archivos pre-construidos
-          app_build_command: "" # Comando vacío para evitar builds automáticos # Ya hicimos el build en el step anterior
+          output_location: ""
+          skip_app_build: true
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
