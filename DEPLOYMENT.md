@@ -88,6 +88,6 @@ build/client/           # Archivos estáticos para Azure
 
 ## 🔗 URLs Importantes
 
-- **Producción**: https://lively-moss-07487241e.azurestaticapps.net
+- **Producción**: https://polite-ocean-07d3e3a1e.azurestaticapps.net
 - **GitHub Repo**: Tu repositorio actual
-- **Azure Portal**: Buscar "lively-moss-07487241e" en Azure Portal
+- **Azure Portal**: Buscar "polite-ocean-07d3e3a1e" en Azure Portal
