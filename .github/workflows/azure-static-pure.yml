@@ -36,38 +36,44 @@ jobs:
 
       - name: Create ultra-clean static deployment
         run: |
-          # Crear directorio completamente aislado
+          # STEP 1: Hide ALL Node.js files from root to prevent Azure detection
+          echo "=== Hiding Node.js files from Azure detection ==="
+          mv package.json package.json.HIDDEN
+          mv package-lock.json package-lock.json.HIDDEN 2>/dev/null || true
+          mv node_modules node_modules.HIDDEN 2>/dev/null || true
+          mv tsconfig.json tsconfig.json.HIDDEN 2>/dev/null || true
+          mv vite.config.ts vite.config.ts.HIDDEN 2>/dev/null || true
+          mv tailwind.config.ts tailwind.config.ts.HIDDEN 2>/dev/null || true
+          mv postcss.config.js postcss.config.js.HIDDEN 2>/dev/null || true
+
+          # STEP 2: Crear directorio completamente aislado
           rm -rf pure-static
           mkdir pure-static
 
-          # Copiar SOLO archivos estáticos compilados
+          # STEP 3: Copiar SOLO archivos estáticos compilados
           cp -r build/client/* pure-static/
 
-          # Copiar configuración de rutas SPA
+          # STEP 4: Copiar configuración de rutas SPA
           cp staticwebapp.config.json pure-static/
-          cp .staticwebapp.config.json pure-static/
 
-          # Crear indicadores de sitio estático puro
+          # STEP 5: Crear indicadores de sitio estático puro
           touch pure-static/.nojekyll
           echo "static" > pure-static/.static
 
-          # Crear README para indicar que es sitio estático
-          echo "# Static Website" > pure-static/README.md
-          echo "This is a pre-built static website." >> pure-static/README.md
+          # STEP 6: Verificar que el root NO tiene Node.js files
+          echo "=== ROOT DIRECTORY (should be clean of Node.js) ==="
+          ls -la . | grep -E "(package|node_modules|tsconfig|vite|tailwind)" || echo "✅ No Node.js files visible to Azure"
 
-          # Verificar contenido final
+          # STEP 7: Verificar contenido final
           echo "=== Pure static deployment contents ==="
           ls -la pure-static/
-          echo "=== Verificar index.html ==="
           test -f pure-static/index.html && echo "✅ index.html exists" || echo "❌ index.html missing"
-          echo "=== Verificar que NO hay package.json ==="
-          test -f pure-static/package.json && echo "❌ package.json found" || echo "✅ No package.json"
 
       - name: Deploy to Azure Static Web Apps (Pure Static)
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_OCEAN_07D3E3A1E }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_MOSS_07487241E }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "pure-static"
@@ -76,10 +82,26 @@ jobs:
           skip_app_build: true
           skip_api_build: true
         env:
-          # Forzar configuración de sitio estático
-          SKIP_ORYX_BUILD: "true"
-          DISABLE_BUILD_OPTIMIZATION: "true"
-          STATIC_SITE_ONLY: "true"
+          # CRITICAL: Force Azure to NOT use Oryx
+          ORYX_DISABLE_NODE_BUILD: "true"
+          ORYX_DISABLE_DOTNET_CORE_BUILD: "true"
+          DISABLE_ORYX: "true"
+          CUSTOM_BUILD_COMMAND: "echo 'Static site - no build'"
+          PRE_BUILD_COMMAND: "echo 'Skip pre-build'"
+          POST_BUILD_COMMAND: "echo 'Skip post-build'"
+
+      - name: Restore hidden files
+        if: always()
+        run: |
+          # Restore all hidden Node.js files
+          mv package.json.HIDDEN package.json 2>/dev/null || true
+          mv package-lock.json.HIDDEN package-lock.json 2>/dev/null || true
+          mv node_modules.HIDDEN node_modules 2>/dev/null || true
+          mv tsconfig.json.HIDDEN tsconfig.json 2>/dev/null || true
+          mv vite.config.ts.HIDDEN vite.config.ts 2>/dev/null || true
+          mv tailwind.config.ts.HIDDEN tailwind.config.ts 2>/dev/null || true
+          mv postcss.config.js.HIDDEN postcss.config.js 2>/dev/null || true
+          echo "✅ All files restored"
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

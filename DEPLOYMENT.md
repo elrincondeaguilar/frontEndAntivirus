@@ -16,6 +16,7 @@ Este proyecto ha sido configurado para desplegarse en **Azure Static Web Apps** 
 **¡ÉXITO!** Azure ya no usa Oryx build system y reconoce el contenido como estático puro.
 
 **Logs muestran**:
+
 - ✅ `App Directory Location: 'pure-static' was found`
 - ✅ No más logs de Oryx build
 - ✅ Azure respeta `skip_app_build: true`
