@@ -1,0 +1,30 @@
+{
+  "include": [
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "server/**/*.ts",
+    "server/**/*.tsx",
+    "client/**/*.ts",
+    "client/**/*.tsx"
+, "app/routes/dashboard.jsx"  ],
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "types": ["@remix-run/node", "vite/client", "@types/react", "@types/react-dom"],
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "target": "ES2022",
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./app/*"]
+    },
+    "strict": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true
+  }
+}
