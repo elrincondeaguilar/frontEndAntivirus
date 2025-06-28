@@ -132,14 +132,18 @@ Ahora Azure puede conectarse pero no encuentra los archivos construidos. El erro
 ## ✅ PROBLEMA ORYX RESUELTO!
 
 ### ✅ Problema 1: Token Configuration - VERIFICAR
+
 Necesita verificación entre dos tokens posibles:
+
 - `AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_MOSS_07487241E` (original)
 - `AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_OCEAN_07D3E3A1E` (nuevo)
 
 ### ✅ Problema 2: Oryx Build Detection - ¡RESUELTO!
+
 🎉 **ÉXITO**: Azure ahora encuentra correctamente `static-deploy` y NO usa Oryx
 
 ## � Nuevo Error (Progreso):
+
 ```
 Try to validate location at: '/github/workspace/static-deploy'.
 App Directory Location: 'static-deploy' was found. ✅
@@ -150,25 +154,31 @@ Reason: No matching Static Web App was found or the api key was invalid. ❌
 ## 🎯 ANÁLISIS DEL PROGRESO:
 
 ### ✅ LO QUE YA FUNCIONA:
+
 1. **Oryx completamente evitado** - ¡Ya no aparece en los logs!
 2. **Directorio detectado correctamente** - `static-deploy` encontrado
 3. **Archivos estáticos listos** - Build funciona perfectamente
 
 ### 🔧 LO QUE FALTA:
+
 **Solo queda el token correcto**. El error cambió de build a autenticación = GRAN PROGRESO
 
 ## 🚀 SOLUCIÓN FINAL:
 
 ### Paso 1: Verificar Token Correcto
+
 Verificar en Azure Portal cuál es el token real:
+
 - Ve a tu Azure Static Web App
 - Manage deployment tokens
 - Copiar el token exacto
 
 ### Paso 2: Actualizar GitHub Secret
+
 - GitHub repo → Settings → Secrets
 - Actualizar con el token correcto
 
 ## � CONCLUSIÓN:
+
 **¡Estamos MUY cerca!** El problema técnico difícil (Oryx) está resuelto.
 Solo falta configurar el token correcto y la aplicación funcionará.

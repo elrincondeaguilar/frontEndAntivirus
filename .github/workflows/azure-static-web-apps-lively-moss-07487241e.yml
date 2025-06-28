@@ -32,30 +32,34 @@ jobs:
       - name: Build project
         run: |
           npm run build
-          
+
       - name: Prepare clean deployment
         run: |
+          # PASO CRÍTICO: Ocultar package.json temporalmente para evitar detección de Node.js
+          mv package.json package.json.backup
+          mv node_modules node_modules.backup || true
+          
           # Crear directorio completamente limpio
           rm -rf static-deploy
           mkdir static-deploy
           
-          # Copiar SOLO archivos estáticos, SIN package.json ni node_modules
+          # Copiar SOLO archivos estáticos
           cp -r build/client/* static-deploy/
           cp staticwebapp.config.json static-deploy/
           touch static-deploy/.nojekyll
           
-          # Crear un index.php como fallback para asegurar que no detecte Node.js
-          echo '<?php header("Location: index.html"); ?>' > static-deploy/index.php
+          # Crear un archivo que indique que es HTML estático
+          echo "<!DOCTYPE html><html><head><meta http-equiv='refresh' content='0;url=index.html'></head></html>" > static-deploy/default.htm
           
-          # NO crear package.json para evitar detección de Node.js
+          # Verificar que NO hay archivos Node.js
+          echo "=== Verificando directorio limpio ==="
+          ls -la static-deploy/ | grep -E "(package\.json|node_modules|\.js$)" || echo "✅ No Node.js files detected"
           
-          # Verificar que NO hay package.json
-          echo "=== Verificando que NO hay package.json en deploy ==="
-          ls -la static-deploy/ | grep -E "(package\.json|node_modules)" || echo "✅ No Node.js files detected"
+          echo "=== Root directory (should not show package.json) ==="
+          ls -la . | grep package || echo "✅ No package.json in root during deploy"
           
-          echo "=== Static deploy directory contents ==="
+          echo "=== Static deploy contents ==="
           ls -la static-deploy/
-          echo "=== Key files check ==="
           test -f static-deploy/index.html && echo "✅ index.html exists" || echo "❌ index.html missing"
 
       - name: Deploy to Azure Static Web Apps
@@ -70,6 +74,13 @@ jobs:
           output_location: ""
           skip_app_build: true
           skip_api_build: true
+
+      - name: Restore files after deploy
+        if: always()
+        run: |
+          # Restaurar archivos originales
+          mv package.json.backup package.json || true
+          mv node_modules.backup node_modules || true
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
