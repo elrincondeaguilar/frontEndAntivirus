@@ -26,20 +26,18 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # Limpiar instalaciones previas
-          rm -rf node_modules
-          rm -f package-lock.json
-
-          # Instalar dependencias principales
-          npm install
-
-          # Instalar Rollup explícitamente (sin el paquete Linux específico)
+          npm ci
           npm install rollup@3.29.4 --save-dev
 
       - name: Build project
+        run: npm run build
+
+      - name: Verify build output
         run: |
-          npm run build
-          # Los archivos públicos ya se copian automáticamente por Vite
+          echo "Listing build/client contents:"
+          ls -la build/client/
+          echo "Checking if index.html exists:"
+          test -f build/client/index.html && echo "✅ index.html found" || echo "❌ index.html missing"
 
       - name: Build And Deploy
         id: builddeploy
@@ -51,6 +49,7 @@ jobs:
           app_location: "/"
           api_location: ""
           output_location: "build/client"
+          skip_app_build: true # Ya hicimos el build en el step anterior
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
