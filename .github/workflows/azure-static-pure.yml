@@ -1,0 +1,94 @@
+name: Azure Static Web Apps CI/CD - Alternative Deploy
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    name: Build and Deploy Job
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: |
+          npm ci
+
+      - name: Build project
+        run: |
+          npm run build
+
+      - name: Create ultra-clean static deployment
+        run: |
+          # Crear directorio completamente aislado
+          rm -rf pure-static
+          mkdir pure-static
+
+          # Copiar SOLO archivos estáticos compilados
+          cp -r build/client/* pure-static/
+
+          # Copiar configuración de rutas SPA
+          cp staticwebapp.config.json pure-static/
+          cp .staticwebapp.config.json pure-static/
+
+          # Crear indicadores de sitio estático puro
+          touch pure-static/.nojekyll
+          echo "static" > pure-static/.static
+
+          # Crear README para indicar que es sitio estático
+          echo "# Static Website" > pure-static/README.md
+          echo "This is a pre-built static website." >> pure-static/README.md
+
+          # Verificar contenido final
+          echo "=== Pure static deployment contents ==="
+          ls -la pure-static/
+          echo "=== Verificar index.html ==="
+          test -f pure-static/index.html && echo "✅ index.html exists" || echo "❌ index.html missing"
+          echo "=== Verificar que NO hay package.json ==="
+          test -f pure-static/package.json && echo "❌ package.json found" || echo "✅ No package.json"
+
+      - name: Deploy to Azure Static Web Apps (Pure Static)
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_OCEAN_07D3E3A1E }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "pure-static"
+          api_location: ""
+          output_location: ""
+          skip_app_build: true
+          skip_api_build: true
+        env:
+          # Forzar configuración de sitio estático
+          SKIP_ORYX_BUILD: "true"
+          DISABLE_BUILD_OPTIMIZATION: "true"
+          STATIC_SITE_ONLY: "true"
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    steps:
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_OCEAN_07D3E3A1E }}
+          action: "close"
