@@ -5,7 +5,7 @@ import { jwtDecode } from "jwt-decode";
 
 
 interface NavbarProps {
-  isAuthenticated: boolean;
+  isAuthenticated?: boolean; // Hacer opcional para compatibilidad con SPA
 }
 
 interface UserData {
@@ -15,11 +15,12 @@ interface UserData {
   role: string;
 }
 
-export default function Navbar({ isAuthenticated }: NavbarProps) {
+export default function Navbar({ isAuthenticated: propIsAuthenticated }: NavbarProps = {}) {
   const location = useLocation();
   // Estados
   //estado que guarda los datos del usuario
   const [currentUser, setCurrentUser] = useState<UserData | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(propIsAuthenticated || false);
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -27,6 +28,27 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
 
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Verificar autenticación del lado del cliente
+  useEffect(() => {
+    const checkClientAuth = () => {
+      if (typeof document === 'undefined') return;
+
+      const cookies = document.cookie;
+      const tokenMatch = cookies.match(/token=([^;]+)/);
+      if (tokenMatch) {
+        const token = tokenMatch[1];
+        if (token.trim() !== '') {
+          setIsAuthenticated(true);
+          // Aquí podrías decodificar el token para obtener datos del usuario
+        }
+      } else {
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkClientAuth();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

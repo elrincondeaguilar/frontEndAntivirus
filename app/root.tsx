@@ -66,37 +66,25 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useLoaderData,
 } from "@remix-run/react";
-import type { LinksFunction, LoaderFunction } from "@remix-run/node";
-import { json } from "@remix-run/node"; // Importamos `json` correctamente
+import type { LinksFunction } from "@remix-run/node";
 
 import "./tailwind.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import { verifyToken } from "./services/authService";
 import FloatingButtons from "./components/FloatingButtons";
 
 
 /**
  * Tipado del loader
  */
+// Interfaz para los datos del loader - mantenida para compatibilidad
 interface LoaderData {
   isAuthenticated: boolean;
 }
 
-/**
- * Loader para verificar la autenticación
- */
-export const loader: LoaderFunction = async ({ request }) => {
-  try {
-    const isAuthenticated = await verifyToken(request);
-    return json<LoaderData>({ isAuthenticated });
-  } catch (error) {
-    console.error("Error en la autenticación:", error);
-    return json<LoaderData>({ isAuthenticated: false }); // Evita fallos si hay un error
-  }
-};
+// Loader removido para compatibilidad con SPA mode
+// La autenticación ahora se maneja del lado del cliente en cada ruta
 
 /**
  * Links para fuentes y estilos
@@ -118,7 +106,8 @@ export const links: LinksFunction = () => [
  * Componente Layout que envuelve la aplicación
  */
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useLoaderData<LoaderData>() || { isAuthenticated: false }; // Valor por defecto
+  // En SPA mode, no usamos datos del loader
+  // La autenticación se maneja del lado del cliente en cada ruta individual
 
   return (
     <html lang="es">
@@ -129,9 +118,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <Navbar isAuthenticated={isAuthenticated} />
+        <Navbar />
         {children}
-        <FloatingButtons/> {/* Botón de Wompi y Whatsapp*/}
+        <FloatingButtons /> {/* Botón de Wompi y Whatsapp*/}
         <Footer />
         <ScrollRestoration />
         <Scripts />

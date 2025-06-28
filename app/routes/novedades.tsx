@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { useLoaderData } from "@remix-run/react";
 import OportunitiesFilter from "~/components/OportunidadesFilter/OportunitiesFilter";
 
-type LoaderData = {
+type NovedadesData = {
   message: string;
   media: string[];
   items: Array<{
@@ -12,20 +11,19 @@ type LoaderData = {
   }>;
 };
 
-export const loader = () => {
-  return {
+export default function Novedades() {
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+
+  // Datos que antes venían del loader, ahora definidos directamente
+  const data: NovedadesData = {
     message: "Ultimas Novedades",
     media: [
-      "/public/images/Comfama-carrusel.jpg",
-      "/public/images/nodo-carrusel.jpg",
-      "/public/images/Sapiencia-carrusel.jpg",
+      "/Images/Comfama-carrusel.jpg",
+      "/Images/nodo-carrusel.jpg",
+      "/Images/Sapiencia-carrusel.jpg",
     ],
+    items: []
   };
-};
-
-export default function Novedades() {
-  const data = useLoaderData<LoaderData>();
-  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
 
 
   const nextMedia = () => {

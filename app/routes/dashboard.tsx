@@ -1,13 +1,11 @@
 import { useEffect, useState, useRef } from "react";
-import { useNavigate, Link, useLoaderData } from "@remix-run/react";
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { 
-  FaHome, 
-  FaChartBar, 
-  FaUser, 
-  FaCog, 
-  FaBell, 
+import { useNavigate, Link } from "@remix-run/react";
+import {
+  FaHome,
+  FaChartBar,
+  FaUser,
+  FaCog,
+  FaBell,
   FaSignOutAlt,
   FaCalendarAlt,
   FaFileAlt,
@@ -37,64 +35,19 @@ interface StatsData {
   utilizationTrend: number;
 }
 
-interface LoaderData {
-  user: UserData;
-  stats: StatsData;
-}
+// Función auxiliar para verificar token del lado del cliente
+const verifyTokenClient = (): boolean => {
+  if (typeof document === 'undefined') return false;
 
-// Función auxiliar para verificar token
-const verifyToken = (cookieHeader: string | null): boolean => {
-  if (!cookieHeader) return false;
-  
-  // Verificar que el token existe y no está vacío
-  const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+  const cookies = document.cookie;
+  const tokenMatch = cookies.match(/token=([^;]+)/);
   if (!tokenMatch) return false;
-  
+
   const token = tokenMatch[1];
-  
-  // Asegúrate de que el token no está vacío
   return token.trim() !== '';
 };
 
-// Loader para verificar autenticación del lado del servidor
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  // Obtener cookies del request
-  const cookieHeader = request.headers.get("Cookie");
-  
-  // Verificar token usando la función auxiliar
-  if (!verifyToken(cookieHeader)) {
-    // Redirigir al login si no hay token válido
-    return redirect('/login');
-  }
-  
-  // En un caso real, aquí harías una petición al backend para validar el token
-  // y obtener datos del usuario autenticado
-  try {
-    // Simular verificación del token con el backend
-    // En una implementación real, esto sería una llamada a tu API
-    
-    return json<LoaderData>({
-      user: {
-        name: "María González",
-        role: "usuario premium",
-        initials: "MG"
-      },
-      stats: {
-        activeUsers: 156,
-        activeUsersTrend: 5,
-        servicesUsed: 4,
-        satisfactionRate: 82,
-        satisfactionTrend: 3,
-        utilizationRate: 68,
-        utilizationTrend: -2
-      }
-    });
-  } catch (error) {
-    console.error("Error al verificar token:", error);
-    // Si hay un error en la verificación del token, redirigir al login
-    return redirect('/login');
-  }
-};
+// Componente principal del Dashboard
 
 // Interfaces para los props de los componentes
 interface StatCardProps {
@@ -108,7 +61,7 @@ interface StatCardProps {
 
 // Componente para mostrar una tarjeta de estadísticas
 const StatCard: React.FC<StatCardProps> = ({ title, value, trend = null, percentage = null, icon, delay = 0 }) => (
-  <motion.div 
+  <motion.div
     className={dashboardStyles.statCard}
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -130,8 +83,8 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, trend = null, percent
     </div>
     <div className={dashboardStyles.progressBarContainer}>
       <div className={dashboardStyles.progressBar}>
-        <motion.div 
-          className={dashboardStyles.progressFill} 
+        <motion.div
+          className={dashboardStyles.progressFill}
           initial={{ width: 0 }}
           animate={{ width: `${percentage !== null ? percentage : 70}%` }}
           transition={{ duration: 1, delay: delay + 0.3 }}
@@ -152,7 +105,7 @@ interface ServiceCardProps {
 
 // Componente para la tarjeta de servicios
 const ServiceCard: React.FC<ServiceCardProps> = ({ title, stats, percentage, icon, delay = 0 }) => (
-  <motion.div 
+  <motion.div
     className={dashboardStyles.serviceCard}
     initial={{ opacity: 0, scale: 0.95 }}
     animate={{ opacity: 1, scale: 1 }}
@@ -166,8 +119,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ title, stats, percentage, ico
     <div className={dashboardStyles.serviceStats}>{stats}</div>
     <div className={dashboardStyles.serviceProgressContainer}>
       <div className={dashboardStyles.serviceProgress}>
-        <motion.div 
-          className={dashboardStyles.serviceProgressFill} 
+        <motion.div
+          className={dashboardStyles.serviceProgressFill}
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 1, delay: delay + 0.2 }}
@@ -187,7 +140,7 @@ interface ActivityItemProps {
 
 // Componente para mostrar actividades o eventos
 const ActivityItem: React.FC<ActivityItemProps> = ({ icon, title, date, index = 0 }) => (
-  <motion.div 
+  <motion.div
     className={dashboardStyles.activityItem}
     initial={{ opacity: 0, x: -20 }}
     animate={{ opacity: 1, x: 0 }}
@@ -207,7 +160,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ icon, title, date, index = 
 // Componente para mostrar el saludo según la hora del día
 const TimeGreeting: React.FC<{ userName: string }> = ({ userName }) => {
   const [greeting, setGreeting] = useState("Bienvenido");
-  
+
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
@@ -218,7 +171,7 @@ const TimeGreeting: React.FC<{ userName: string }> = ({ userName }) => {
       setGreeting("¡Buenas noches");
     }
   }, []);
-  
+
   return (
     <span className={dashboardStyles.greeting}>{greeting}, <span className={dashboardStyles.userName}>{userName}</span>!</span>
   );
@@ -226,24 +179,65 @@ const TimeGreeting: React.FC<{ userName: string }> = ({ userName }) => {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  // Fix: Properly type the return value from useLoaderData
-  const data = useLoaderData<typeof loader>() as LoaderData;
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Datos que antes venían del loader
+  const data = {
+    user: {
+      name: "María González",
+      role: "usuario premium",
+      initials: "MG"
+    },
+    stats: {
+      activeUsers: 156,
+      activeUsersTrend: 5,
+      servicesUsed: 4,
+      satisfactionRate: 82,
+      satisfactionTrend: 3,
+      utilizationRate: 68,
+      utilizationTrend: -2
+    }
+  };
+
   const [activeTab, setActiveTab] = useState<"services" | "history" | "settings">("services");
   const [showWelcome, setShowWelcome] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
-  
+
+  // Verificar autenticación del lado del cliente
+  useEffect(() => {
+    const checkAuth = () => {
+      if (!verifyTokenClient()) {
+        navigate('/login');
+        return;
+      }
+      setIsAuthenticated(true);
+      setLoading(false);
+    };
+
+    checkAuth();
+  }, [navigate]);
+
+  if (loading) {
+    return <div>Verificando autenticación...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
   // Reference for the stats grid to trigger animations when it comes into view
   const statsRef = useRef<HTMLDivElement>(null);
-  
+
   // Actualizar la hora cada minuto
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
-    
+
     return () => clearInterval(timer);
   }, []);
-  
+
   // Formatear la fecha y hora actuales
   const formattedDate = new Intl.DateTimeFormat('es-ES', {
     weekday: 'long',
@@ -251,21 +245,21 @@ export default function Dashboard() {
     month: 'long',
     year: 'numeric'
   }).format(currentTime);
-  
+
   const formattedTime = new Intl.DateTimeFormat('es-ES', {
     hour: '2-digit',
     minute: '2-digit'
   }).format(currentTime);
-  
+
   // Efecto para ocultar el mensaje de bienvenida después de 5 segundos
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowWelcome(false);
     }, 5000);
-    
+
     return () => clearTimeout(timer);
   }, []);
-  
+
   // Efecto para verificar token en el cliente
   useEffect(() => {
     // Verificar si hay token en las cookies del cliente
@@ -274,7 +268,7 @@ export default function Dashboard() {
       navigate('/login');
     }
   }, [navigate]);
-  
+
   // Función para cerrar sesión
   const handleLogout = (): void => {
     // Eliminar el token de cookies (usar un formato más seguro)
@@ -287,13 +281,13 @@ export default function Dashboard() {
       {/* Overlay de bienvenida */}
       <AnimatePresence>
         {showWelcome && (
-          <motion.div 
+          <motion.div
             className={dashboardStyles.welcomeOverlay}
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <motion.div 
+            <motion.div
               className={dashboardStyles.welcomeOverlayContent}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -317,7 +311,7 @@ export default function Dashboard() {
               >
                 Cargando tu experiencia personalizada...
               </motion.p>
-              <motion.div 
+              <motion.div
                 className={dashboardStyles.loadingBar}
                 initial={{ width: "0%" }}
                 animate={{ width: "100%" }}
@@ -329,7 +323,7 @@ export default function Dashboard() {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <motion.div 
+      <motion.div
         className={dashboardStyles.sidebar}
         initial={{ x: -100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
@@ -339,7 +333,7 @@ export default function Dashboard() {
           <img src="/Images/Javi.png" alt="Logo" className={dashboardStyles.logo} />
           <div className={dashboardStyles.logoText}>Banco de<br />Oportunidades</div>
         </div>
-        
+
         <div className={dashboardStyles.userProfileSidebar}>
           <div className={dashboardStyles.userAvatarLarge}>
             {data.user.initials}
@@ -349,7 +343,7 @@ export default function Dashboard() {
             <div className={dashboardStyles.userRole}>{data.user.role}</div>
           </div>
         </div>
-        
+
         <nav className={dashboardStyles.navigation}>
           <Link to="/dashboard" className={dashboardStyles.navItem + " " + dashboardStyles.active}>
             <FaHome /> <span>Inicio</span>
@@ -364,7 +358,7 @@ export default function Dashboard() {
             <FaCog /> <span>Configuración</span>
           </Link>
         </nav>
-        
+
         <div className={dashboardStyles.sidebarFooter}>
           <div className={dashboardStyles.dateTimeInfo}>
             <div className={dashboardStyles.currentTime}>{formattedTime}</div>
@@ -379,7 +373,7 @@ export default function Dashboard() {
       {/* Contenido principal */}
       <div className={dashboardStyles.mainContent}>
         {/* Header */}
-        <motion.header 
+        <motion.header
           className={dashboardStyles.header}
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -406,14 +400,14 @@ export default function Dashboard() {
         {/* Contenido */}
         <div className={dashboardStyles.content}>
           {/* Mensaje de bienvenida */}
-          <motion.div 
+          <motion.div
             className={dashboardStyles.welcomeSection}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
             <div className={dashboardStyles.welcomeHeader}>
-              <motion.h2 
+              <motion.h2
                 className={dashboardStyles.welcomeTitle}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -421,7 +415,7 @@ export default function Dashboard() {
               >
                 <TimeGreeting userName={data.user.name} />
               </motion.h2>
-              <motion.div 
+              <motion.div
                 className={dashboardStyles.welcomeDate}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -430,7 +424,7 @@ export default function Dashboard() {
                 {formattedDate}
               </motion.div>
             </div>
-            <motion.p 
+            <motion.p
               className={dashboardStyles.welcomeText}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -442,33 +436,33 @@ export default function Dashboard() {
 
           {/* Tarjetas de estadísticas */}
           <div className={dashboardStyles.statsGrid} ref={statsRef}>
-            <StatCard 
-              title="Usuarios activos" 
-              value={data.stats.activeUsers} 
-              trend={data.stats.activeUsersTrend} 
+            <StatCard
+              title="Usuarios activos"
+              value={data.stats.activeUsers}
+              trend={data.stats.activeUsersTrend}
               percentage={70}
               icon={<FaUser />}
               delay={0.1}
             />
-            <StatCard 
-              title="Servicios utilizados" 
-              value={data.stats.servicesUsed} 
+            <StatCard
+              title="Servicios utilizados"
+              value={data.stats.servicesUsed}
               percentage={40}
               icon={<FaWallet />}
               delay={0.2}
             />
-            <StatCard 
-              title="Tasa de satisfacción" 
-              value={`${data.stats.satisfactionRate}%`} 
-              trend={data.stats.satisfactionTrend} 
+            <StatCard
+              title="Tasa de satisfacción"
+              value={`${data.stats.satisfactionRate}%`}
+              trend={data.stats.satisfactionTrend}
               percentage={data.stats.satisfactionRate}
               icon={<FaShieldAlt />}
               delay={0.3}
             />
-            <StatCard 
-              title="Aprovechamiento" 
-              value={`${data.stats.utilizationRate}%`} 
-              trend={data.stats.utilizationTrend} 
+            <StatCard
+              title="Aprovechamiento"
+              value={`${data.stats.utilizationRate}%`}
+              trend={data.stats.utilizationTrend}
               percentage={data.stats.utilizationRate}
               icon={<FaRegLightbulb />}
               delay={0.4}
@@ -476,26 +470,26 @@ export default function Dashboard() {
           </div>
 
           {/* Pestañas */}
-          <motion.div 
+          <motion.div
             className={dashboardStyles.tabsContainer}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
           >
             <div className={dashboardStyles.tabs}>
-              <button 
+              <button
                 className={`${dashboardStyles.tab} ${activeTab === 'services' && dashboardStyles.activeTab}`}
                 onClick={() => setActiveTab('services')}
               >
                 Servicios disponibles
               </button>
-              <button 
+              <button
                 className={`${dashboardStyles.tab} ${activeTab === 'history' && dashboardStyles.activeTab}`}
                 onClick={() => setActiveTab('history')}
               >
                 Historial
               </button>
-              <button 
+              <button
                 className={`${dashboardStyles.tab} ${activeTab === 'settings' && dashboardStyles.activeTab}`}
                 onClick={() => setActiveTab('settings')}
               >
@@ -507,7 +501,7 @@ export default function Dashboard() {
             <div className={dashboardStyles.tabContent}>
               <AnimatePresence mode="wait">
                 {activeTab === 'services' && (
-                  <motion.div 
+                  <motion.div
                     key="services"
                     className={dashboardStyles.servicesGrid}
                     initial={{ opacity: 0, y: 10 }}
@@ -515,39 +509,39 @@ export default function Dashboard() {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <ServiceCard 
-                      title="Estadísticas personales" 
-                      stats="Actualizado: Hoy • 5 reportes" 
-                      percentage={75} 
+                    <ServiceCard
+                      title="Estadísticas personales"
+                      stats="Actualizado: Hoy • 5 reportes"
+                      percentage={75}
                       icon={<FaChartBar />}
                       delay={0.1}
                     />
-                    <ServiceCard 
-                      title="Actividad reciente" 
-                      stats="Actualizado: Ayer • 10 actividades" 
-                      percentage={60} 
+                    <ServiceCard
+                      title="Actividad reciente"
+                      stats="Actualizado: Ayer • 10 actividades"
+                      percentage={60}
                       icon={<FaFileAlt />}
                       delay={0.2}
                     />
-                    <ServiceCard 
-                      title="Configuración de cuenta" 
-                      stats="Seguridad: Buena • 2 opciones pendientes" 
-                      percentage={80} 
+                    <ServiceCard
+                      title="Configuración de cuenta"
+                      stats="Seguridad: Buena • 2 opciones pendientes"
+                      percentage={80}
                       icon={<FaCog />}
                       delay={0.3}
                     />
-                    <ServiceCard 
-                      title="Recursos adicionales" 
-                      stats="12 documentos • 4 videos" 
-                      percentage={50} 
+                    <ServiceCard
+                      title="Recursos adicionales"
+                      stats="12 documentos • 4 videos"
+                      percentage={50}
                       icon={<FaRegLightbulb />}
                       delay={0.4}
                     />
                   </motion.div>
                 )}
-                
+
                 {activeTab === 'history' && (
-                  <motion.div 
+                  <motion.div
                     key="history"
                     className={dashboardStyles.historyContent}
                     initial={{ opacity: 0, y: 10 }}
@@ -558,9 +552,9 @@ export default function Dashboard() {
                     <p>Historial de actividades y transacciones...</p>
                   </motion.div>
                 )}
-                
+
                 {activeTab === 'settings' && (
-                  <motion.div 
+                  <motion.div
                     key="settings"
                     className={dashboardStyles.settingsContent}
                     initial={{ opacity: 0, y: 10 }}
@@ -576,7 +570,7 @@ export default function Dashboard() {
           </motion.div>
 
           {/* Sección de actividades y eventos */}
-          <motion.div 
+          <motion.div
             className={dashboardStyles.activitySection}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -588,28 +582,28 @@ export default function Dashboard() {
                 Actividad reciente
               </h3>
               <div className={dashboardStyles.activityList}>
-                <ActivityItem 
-                  icon={<FaFileAlt />} 
-                  title="Has actualizado tu perfil de usuario" 
-                  date="Hoy, 09:45" 
+                <ActivityItem
+                  icon={<FaFileAlt />}
+                  title="Has actualizado tu perfil de usuario"
+                  date="Hoy, 09:45"
                   index={0}
                 />
-                <ActivityItem 
-                  icon={<FaUser />} 
-                  title="Solicitud de servicio procesada correctamente" 
-                  date="Ayer, 15:20" 
+                <ActivityItem
+                  icon={<FaUser />}
+                  title="Solicitud de servicio procesada correctamente"
+                  date="Ayer, 15:20"
                   index={1}
                 />
-                <ActivityItem 
-                  icon={<FaCog />} 
-                  title="Cambio de contraseña realizado" 
-                  date="02/04/2025" 
+                <ActivityItem
+                  icon={<FaCog />}
+                  title="Cambio de contraseña realizado"
+                  date="02/04/2025"
                   index={2}
                 />
-                <ActivityItem 
-                  icon={<FaChartBar />} 
-                  title="Informe mensual generado" 
-                  date="01/04/2025" 
+                <ActivityItem
+                  icon={<FaChartBar />}
+                  title="Informe mensual generado"
+                  date="01/04/2025"
                   index={3}
                 />
               </div>
@@ -621,28 +615,28 @@ export default function Dashboard() {
                 Próximos eventos
               </h3>
               <div className={dashboardStyles.eventsList}>
-                <ActivityItem 
-                  icon={<FaCalendarAlt />} 
-                  title="Webinar: 'Optimiza tus recursos'" 
-                  date="10/04/2025, 16:00 - 17:30" 
+                <ActivityItem
+                  icon={<FaCalendarAlt />}
+                  title="Webinar: 'Optimiza tus recursos'"
+                  date="10/04/2025, 16:00 - 17:30"
                   index={0}
                 />
-                <ActivityItem 
-                  icon={<FaUser />} 
-                  title="Sesión de orientación personalizada" 
-                  date="15/04/2025, 10:00 - 11:00" 
+                <ActivityItem
+                  icon={<FaUser />}
+                  title="Sesión de orientación personalizada"
+                  date="15/04/2025, 10:00 - 11:00"
                   index={1}
                 />
-                <ActivityItem 
-                  icon={<FaTasks />} 
-                  title="Taller: 'Herramientas para el éxito'" 
-                  date="22/04/2025, 15:00 - 17:00" 
+                <ActivityItem
+                  icon={<FaTasks />}
+                  title="Taller: 'Herramientas para el éxito'"
+                  date="22/04/2025, 15:00 - 17:00"
                   index={2}
                 />
-                <ActivityItem 
-                  icon={<FaClock />} 
-                  title="Lanzamiento de nueva funcionalidad" 
-                  date="30/04/2025, 09:00" 
+                <ActivityItem
+                  icon={<FaClock />}
+                  title="Lanzamiento de nueva funcionalidad"
+                  date="30/04/2025, 09:00"
                   index={3}
                 />
               </div>
@@ -651,7 +645,7 @@ export default function Dashboard() {
         </div>
 
         {/* Footer */}
-        <motion.footer 
+        <motion.footer
           className={dashboardStyles.footer}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

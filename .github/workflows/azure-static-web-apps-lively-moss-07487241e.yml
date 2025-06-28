@@ -14,83 +14,43 @@ jobs:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
-<<<<<<< HEAD
-=======
-    permissions:
-      id-token: write
-      contents: read
->>>>>>> 3c1445dc469d69c37b1f28c00aa05d733fabd45e
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: true
-<<<<<<< HEAD
-
-=======
-          lfs: false
-      
->>>>>>> 3c1445dc469d69c37b1f28c00aa05d733fabd45e
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: |
-<<<<<<< HEAD
           # Limpiar instalaciones previas
           rm -rf node_modules
           rm -f package-lock.json
-          
+
           # Instalar dependencias principales
           npm install
-          
+
           # Instalar Rollup explícitamente (sin el paquete Linux específico)
           npm install rollup@3.29.4 --save-dev
 
       - name: Build project
         run: |
           npm run build
-          # Copiar archivos estáticos al directorio de build
-          cp -r public/* build/client/ || true
-=======
-          rm -rf node_modules
-          rm -f package-lock.json
-          npm install
-          npm install rollup@3.29.4 --save-dev
-
-      - name: Install OIDC Client from Core Package
-        run: npm install @actions/core@1.6.0 @actions/http-client
-
-      - name: Get Id Token
-        uses: actions/github-script@v6
-        id: idtoken
-        with:
-          script: |
-            const coredemo = require('@actions/core')
-            return await coredemo.getIDToken()
-          result-encoding: string
->>>>>>> 3c1445dc469d69c37b1f28c00aa05d733fabd45e
+          # Los archivos públicos ya se copian automáticamente por Vite
 
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_MOSS_07487241E }}
-<<<<<<< HEAD
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "/"
           api_location: ""
           output_location: "build/client"
-=======
-          action: "upload"
-          app_location: "/"
-          api_location: ""
-          output_location: "public"
-          github_id_token: ${{ steps.idtoken.outputs.result }}
->>>>>>> 3c1445dc469d69c37b1f28c00aa05d733fabd45e
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -101,8 +61,5 @@ jobs:
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1
         with:
-<<<<<<< HEAD
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_MOSS_07487241E }}
-=======
->>>>>>> 3c1445dc469d69c37b1f28c00aa05d733fabd45e
           action: "close"
