@@ -42,25 +42,33 @@ jobs:
           # Copiar SOLO archivos estáticos
           cp -r build/client/* static-deploy/
           cp staticwebapp.config.json static-deploy/
-          cp .staticwebapp.config.json static-deploy/
 
           # Crear marcadores de sitio estático
           touch static-deploy/.nojekyll
           echo "<!DOCTYPE html><html><head><meta http-equiv='refresh' content='0;url=index.html'></head></html>" > static-deploy/default.htm
-          echo "<?php header('Location: index.html'); ?>" > static-deploy/index.php
 
-          # CRÍTICO: Crear un package.json VACÍO en static-deploy para confundir a Oryx
-          echo '{"name":"static-site","version":"1.0.0","scripts":{},"dependencies":{}}' > static-deploy/package.json
+          # NO crear package.json - Azure lo detecta y fuerza Oryx
+          # En su lugar, crear un index.txt para indicar que es contenido estático
+          echo "Static website content" > static-deploy/index.txt
 
-          # Crear un .gitignore para forzar reconocimiento como sitio estático
-          echo "node_modules/" > static-deploy/.gitignore
-          echo "*.log" >> static-deploy/.gitignore
-
-          # Verificar contenido
-          echo "=== Static deploy contents ==="
+          # Verificar que NO hay rastros de Node.js
+          echo "=== Verificando directorio 100% estático ==="
           ls -la static-deploy/
-          echo "=== Package.json content (should be minimal) ==="
-          cat static-deploy/package.json
+          echo "=== Verificar que NO hay package.json ==="
+          test -f static-deploy/package.json && echo "❌ PROBLEMA: package.json encontrado" || echo "✅ No package.json - Azure debería detectar como estático"
+          test -f static-deploy/index.html && echo "✅ index.html exists" || echo "❌ index.html missing"
+
+      - name: Hide Node.js files from Azure detection
+        run: |
+          # Mover archivos Node.js temporalmente para que Azure no los detecte
+          mv package.json package.json.hidden
+          mv package-lock.json package-lock.json.hidden 2>/dev/null || true
+          mv node_modules node_modules.hidden 2>/dev/null || true
+          mv tsconfig.json tsconfig.json.hidden 2>/dev/null || true
+          mv vite.config.ts vite.config.ts.hidden 2>/dev/null || true
+          
+          echo "=== Root directory during deployment (should be clean) ==="
+          ls -la . | head -20
 
       - name: Deploy to Azure Static Web Apps
         id: builddeploy
@@ -71,19 +79,28 @@ jobs:
           action: "upload"
           app_location: "static-deploy"
           api_location: ""
-          output_location: ""
+          output_location: "."
           skip_app_build: true
           skip_api_build: true
         env:
-          # Force Azure to treat as static site
-          CUSTOM_BUILD_COMMAND: "echo 'Static site - no build needed'"
-          PRE_BUILD_COMMAND: ""
-          POST_BUILD_COMMAND: ""
+          # Force Azure to treat as static site - CRITICAL SETTINGS
+          ORYX_DISABLE_BUILD: "true"
+          CUSTOM_BUILD_COMMAND: "echo 'Pre-built static site'"
+          PRE_BUILD_COMMAND: "echo 'No pre-build needed'"
+          POST_BUILD_COMMAND: "echo 'No post-build needed'"
+          APP_LOCATION: "static-deploy"
+          OUTPUT_LOCATION: "."
 
       - name: Restore files after deploy
         if: always()
         run: |
-          echo "Deploy completed"
+          # Restaurar archivos Node.js originales
+          mv package.json.hidden package.json 2>/dev/null || true
+          mv package-lock.json.hidden package-lock.json 2>/dev/null || true
+          mv node_modules.hidden node_modules 2>/dev/null || true
+          mv tsconfig.json.hidden tsconfig.json 2>/dev/null || true
+          mv vite.config.ts.hidden vite.config.ts 2>/dev/null || true
+          echo "✅ Files restored after deployment"
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
