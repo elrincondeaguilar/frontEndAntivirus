@@ -1,14 +1,51 @@
-# ✅ PROBLEMA RESUELTO# ✅ PROBLEMAS RESUELTOS: Azure Static Web Apps Deployment
+# 🔄 PROBLEMA PERSISTENTE: Azure Static Web Apps Deployment
 
-## 🎉 Estado Final: FUNCIONANDO CORRECTAMENTE
+## ⚠️ Estado Actual: TROUBLESHOOTING ACTIVO
 
 ### ✅ Problema 1: Token Configuration - RESUELTO
 
-El token ahora está funcionando correctamente con el nombre: `AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_OCEAN_07D3E3A1E`
+El token está funcionando correctamente: `AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_OCEAN_07D3E3A1E`
 
-### ✅ Problema 2: App Artifacts Location - RESUELTO
+### 🔄 Problema 2: Oryx Build Detection - EN PROGRESO
 
-El problema de ubicación de artefactos ha sido solucionado cambiando la configuración del workflow.
+Azure sigue detectando el proyecto como Node.js y forzando el uso de Oryx build, ignorando `skip_app_build: true`.
+
+## 🚨 Error Actual:
+
+```
+---End of Oryx build logs---
+Try to validate location at: '/bin/staticsites/ec059d6c-f1eb-445b-b1b8-ba7b608d3850-swa-oryx/app'.
+Oryx built the app folder but was unable to determine the location of the app artifacts.
+```
+
+## 🔧 Solución en Implementación:
+
+### Nueva Estrategia: Directorio de Deploy Separado
+
+```yaml
+- name: Build project
+  run: |
+    npm run build
+    # Crear directorio completamente independiente
+    mkdir -p deploy
+    cp -r build/client/* deploy/
+    cp staticwebapp.config.json deploy/
+    touch deploy/.nojekyll
+    echo '{"scripts":{"start":"serve -s . -p 8080"}}' > deploy/package.json
+    echo -e '[build]\nskipBuild = true' > deploy/.oryxignore
+
+- name: Deploy to Azure Static Web Apps
+  with:
+    app_location: "deploy" # 🔑 Directorio separado sin package.json principal
+    output_location: "."
+    skip_app_build: true
+```
+
+### Archivos Adicionales Creados:
+
+- ✅ `.deployment` - Configuración para deshabilitar build
+- ✅ `deploy/.oryxignore` - Le dice a Oryx que no haga build
+- ✅ `deploy/package.json` - Package.json simple sin dependencias de build
 
 ## 📝 Solución Final Aplicada:
 
